@@ -7,13 +7,13 @@ export class OkamiService {
 
   async markWorkUnread(worker_id: string) {
     return this.okamiHttpServicer
-      .patch(`/worker/${worker_id}/mark-unread`)
+      .patch(`/work/${worker_id}/mark-unread`)
       .subscribe();
   }
 
   async markWorkRead(worker_id: string) {
     return this.okamiHttpServicer
-      .patch(`/worker/${worker_id}/mark-read`)
+      .patch(`/work/${worker_id}/mark-read`)
       .subscribe();
   }
 }

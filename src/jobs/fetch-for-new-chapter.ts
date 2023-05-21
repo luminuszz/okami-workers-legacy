@@ -54,7 +54,7 @@ export class FetchForNewChapterJob {
     puppeteer.use(StealthPlugin());
 
     return puppeteer.launch({
-      //  executablePath: '/usr/bin/google-chrome',
+      executablePath: '/usr/bin/google-chrome',
       args,
     });
   }
