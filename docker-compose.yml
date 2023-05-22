@@ -3,6 +3,8 @@ version: '3.7'
 
 services:
   workers:
+    networks:
+      - default
     build: .
     container_name: okami-workers
     restart: always
@@ -14,4 +16,14 @@ services:
       - REDIS_PASSWORD=${REDIS_PASSWORD}
       - OKAMI_BASE_URL=${OKAMI_BASE_URL}
       - API_PORT=${API_PORT}
-      
+
+
+
+
+networks:
+  default:
+    external:
+      name: okami-default-network
+
+
+
