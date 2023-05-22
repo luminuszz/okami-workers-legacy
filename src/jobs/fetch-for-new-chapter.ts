@@ -10,7 +10,6 @@ import { Logger } from '@nestjs/common';
 import { Job } from 'bull';
 import { find } from 'lodash';
 import puppeteer from 'puppeteer-extra';
-import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { OkamiService } from 'src/okami.service';
 
 export type CheckWithExistsNewChapterDto = {
@@ -51,11 +50,12 @@ export class FetchForNewChapterJob {
       '--user-agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3312.0 Safari/537.36"',
     ];
 
-    puppeteer.use(StealthPlugin());
+    //    puppeteer.use(StealthPlugin());
 
     return puppeteer.launch({
       executablePath: '/usr/bin/google-chrome',
       args,
+      channel: 'chrome-beta',
     });
   }
 
@@ -146,8 +146,8 @@ export class FetchForNewChapterJob {
       this._logger.log(`New chapter: ${newChapter}`);
 
       await this.okamiService.markWorkUnread(id);
+    } else {
+      this._logger.debug(`No new chapter for ${name} - ${id}`);
     }
-
-    this._logger.debug(`No new chapter for ${name} - ${id}`);
   }
 }
