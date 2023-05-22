@@ -41,6 +41,7 @@ export class FetchForNewEpisodeJob {
     ];
 
     return puppeteer.launch({
+      headless: 'new',
       executablePath: '/usr/bin/google-chrome',
       args,
       channel: 'chrome-beta',

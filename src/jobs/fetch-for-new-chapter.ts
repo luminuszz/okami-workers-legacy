@@ -9,7 +9,7 @@ import {
 import { Logger } from '@nestjs/common';
 import { Job } from 'bull';
 import { find } from 'lodash';
-import puppeteer from 'puppeteer-extra';
+import puppeteer from 'puppeteer-core';
 import { OkamiService } from 'src/okami.service';
 
 export type CheckWithExistsNewChapterDto = {
@@ -50,12 +50,9 @@ export class FetchForNewChapterJob {
       '--user-agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3312.0 Safari/537.36"',
     ];
 
-    //    puppeteer.use(StealthPlugin());
-
     return puppeteer.launch({
       executablePath: '/usr/bin/google-chrome',
       args,
-      channel: 'chrome-beta',
     });
   }
 
@@ -82,6 +79,8 @@ export class FetchForNewChapterJob {
 
     try {
       const page = await browser.newPage();
+
+      await page.setViewport({ width: 800, height: 600 });
 
       this._logger.log(`Opening page ${url}`);
 
