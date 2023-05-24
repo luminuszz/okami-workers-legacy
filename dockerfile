@@ -1,6 +1,4 @@
-FROM node:slim
-
-WORKDIR /home/services/scraping-service
+FROM node
 
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
 

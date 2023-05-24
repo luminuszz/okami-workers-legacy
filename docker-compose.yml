@@ -1,12 +1,12 @@
 version: '3.7'
 
+name: okami
 
 services:
   workers:
     build: .
-    container_name: okami-workers
+    container_name: workers
     restart: always
-    network_mode: "host"
     ports:
       - 5000:5000
     environment:

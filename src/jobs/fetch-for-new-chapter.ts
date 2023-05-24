@@ -2,6 +2,7 @@ import {
   OnQueueActive,
   OnQueueCompleted,
   OnQueueError,
+  OnQueueFailed,
   Process,
   Processor,
 } from '@nestjs/bull';
@@ -9,7 +10,8 @@ import {
 import { Logger } from '@nestjs/common';
 import { Job } from 'bull';
 import { find } from 'lodash';
-import puppeteer from 'puppeteer-core';
+import puppeteer from 'puppeteer-extra';
+
 import { OkamiService } from 'src/okami.service';
 
 export type CheckWithExistsNewChapterDto = {
@@ -51,8 +53,10 @@ export class FetchForNewChapterJob {
     ];
 
     return puppeteer.launch({
+      headless: true,
       executablePath: '/usr/bin/google-chrome',
       args,
+      channel: 'chrome-beta',
     });
   }
 
@@ -77,53 +81,46 @@ export class FetchForNewChapterJob {
   }: Job<CheckWithExistsNewChapterDto>): Promise<JobResponse> {
     const browser = await this.initializeBrowser();
 
-    try {
-      const page = await browser.newPage();
+    const page = await browser.newPage();
 
-      await page.setViewport({ width: 800, height: 600 });
+    await page.setViewport({ width: 800, height: 600 });
 
-      this._logger.log(`Opening page ${url}`);
+    this._logger.log(`Opening page ${url}`);
 
-      await page.setUserAgent(
-        'Mozilla/5.0 (Windows NT 5.1; rv:5.0) Gecko/20100101 Firefox/5.0',
-      );
+    await page.setUserAgent(
+      'Mozilla/5.0 (Windows NT 5.1; rv:5.0) Gecko/20100101 Firefox/5.0',
+    );
 
-      await page.goto(url, {
-        waitUntil: 'networkidle2',
-      });
+    await page.goto(url, {
+      waitUntil: 'networkidle2',
+    });
 
-      const html = await page.evaluate(
-        () => document.querySelector('*').outerHTML,
-      );
+    const html = await page.evaluate(
+      () => document.querySelector('*').outerHTML,
+    );
 
-      const possibleNextChapters = this.predictingNextChapterList(cap);
+    const possibleNextChapters = this.predictingNextChapterList(cap);
 
-      const stringsToMatch = possibleNextChapters
-        .map((cap) => this.stringMatchFilterList(cap))
-        .flat();
+    const stringsToMatch = possibleNextChapters
+      .map((cap) => this.stringMatchFilterList(cap))
+      .flat();
 
-      const newChapter = find(stringsToMatch, (stringToMatch) =>
-        html.includes(stringToMatch),
-      );
+    const newChapter = find(stringsToMatch, (stringToMatch) =>
+      html.includes(stringToMatch),
+    );
 
-      await browser.close();
+    await browser.close();
 
-      return {
-        id,
-        hasNewChapter: !!newChapter,
-        newChapter: newChapter || null,
-        stringsToMatch,
-        html,
-        cap,
-        url,
-        name,
-      };
-    } catch (e) {
-      this._logger.error(e);
-      throw e;
-    } finally {
-      await browser.close();
-    }
+    return {
+      id,
+      hasNewChapter: !!newChapter,
+      newChapter: newChapter || null,
+      stringsToMatch,
+      html,
+      cap,
+      url,
+      name,
+    };
   }
 
   @OnQueueActive()
@@ -132,8 +129,13 @@ export class FetchForNewChapterJob {
   }
 
   @OnQueueError()
-  async error(any, error) {
-    this._logger.error(JSON.stringify({ any, error }));
+  async error(error) {
+    this._logger.error(JSON.stringify(error));
+  }
+
+  @OnQueueFailed()
+  failed(...values) {
+    this._logger.error(`Faliues ${values}}`);
   }
 
   @OnQueueCompleted()
@@ -142,6 +144,7 @@ export class FetchForNewChapterJob {
 
     if (hasNewChapter) {
       this._logger.log(`Found new chapter for ${name} - ${id}`);
+      ``;
       this._logger.log(`New chapter: ${newChapter}`);
 
       await this.okamiService.markWorkUnread(id);
