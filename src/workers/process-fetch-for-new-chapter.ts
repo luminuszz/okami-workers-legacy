@@ -108,9 +108,9 @@ export class ProcessFetchForNewChapter {
         this._logger.warn(`not found new chapter for ${name}`);
       }
 
-      done();
+      done(null, { message: 'Done' });
     } catch (e) {
-      done(e);
+      done(e, { message: e.message });
     }
   }
 }

@@ -1,10 +1,9 @@
-import { OnQueueCompleted, Process, Processor } from '@nestjs/bull';
-import { Logger } from '@nestjs/common';
-import { Job } from 'bull';
+import { DoneCallback, Job } from 'bull';
 import * as cheerio from 'cheerio';
 import { find } from 'lodash';
 import puppeteer from 'puppeteer-extra';
-import { OkamiService } from 'src/okami.service';
+import { createLogger } from './utils/createLogger';
+import { createOkamiInstance } from './utils/createOkamiInstance';
 
 export const fetchWorkEpisodeToken = 'find-serie-episode';
 
@@ -15,19 +14,8 @@ export interface FindSerieEpisodeJobData {
   name: string;
 }
 
-interface FindSerieEpisodeJobResponse {
-  id: string;
-  hasNewEpisode: boolean;
-  newEpisode: string | null;
-  url: string;
-  name: string;
-}
-
-@Processor(fetchWorkEpisodeToken)
 export class FetchForNewEpisodeJob {
-  private logger = new Logger(FetchForNewEpisodeJob.name);
-
-  constructor(private readonly okamiService: OkamiService) {}
+  private logger = createLogger(FetchForNewEpisodeJob.name);
 
   private async initializeBrowser() {
     const args: string[] = [
@@ -64,14 +52,13 @@ export class FetchForNewEpisodeJob {
     return Array.from({ length: 10 }, () => Number((value += 0.1).toFixed(1)));
   }
 
-  @Process()
-  public async execute({
-    data: { episode, id, url, name },
-  }: Job<FindSerieEpisodeJobData>): Promise<FindSerieEpisodeJobResponse> {
+  public async execute(job: Job<FindSerieEpisodeJobData>, done: DoneCallback) {
+    const { episode, id, url, name } = job.data;
+
     const browser = await this.initializeBrowser();
 
     try {
-      this.logger.debug(`Initit job for ${name} - ${id}`);
+      this.logger.info(`Initit job for anime ${name} - ${id}`);
 
       const page = await browser.newPage();
 
@@ -79,7 +66,7 @@ export class FetchForNewEpisodeJob {
         'Mozilla/5.0 (Windows NT 5.1; rv:5.0) Gecko/20100101 Firefox/5.0',
       );
 
-      this.logger.debug(`Opening page ${url}`);
+      this.logger.info(`Opening page ${url}`);
 
       await page.goto(url, { waitUntil: 'networkidle2' });
 
@@ -97,34 +84,26 @@ export class FetchForNewEpisodeJob {
         content('*').first().text().includes(string),
       );
 
-      return {
-        hasNewEpisode: !!newEpisode,
-        name,
-        newEpisode,
-        url,
-        id,
-      };
+      if (!!newEpisode) {
+        const okamiService = await createOkamiInstance();
+
+        this.logger.info(`Found new episode for ${name} - ${id}`);
+        this.logger.info(`New episode: ${newEpisode}`);
+
+        await okamiService.markWorkUnread(id);
+      } else {
+        this.logger.warn(`No new episode for ${name} - ${id}`);
+      }
+
+      done(null, { message: 'Done' });
     } catch (error) {
-      this.logger.error(error);
-    } finally {
-      await browser.close();
+      done(error, { message: error.message });
     }
-  }
-
-  @OnQueueCompleted()
-  async onJobCompleted({ returnvalue }: Job) {
-    const { hasNewEpisode, name, newEpisode, id } =
-      returnvalue as FindSerieEpisodeJobResponse;
-
-    if (hasNewEpisode) {
-      this.logger.log(`Found new episode for ${name} - ${id}`);
-      this.logger.log(`New episode: ${newEpisode}`);
-
-      await this.okamiService.markWorkUnread(id);
-
-      return;
-    }
-
-    this.logger.debug(`No new episode for ${name} - ${id}`);
   }
 }
+
+export default (job: Job<FindSerieEpisodeJobData>, dn: DoneCallback) => {
+  const worker = new FetchForNewEpisodeJob();
+
+  return worker.execute(job, dn);
+};

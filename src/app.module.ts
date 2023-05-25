@@ -4,11 +4,7 @@ import { HttpModule } from '@nestjs/axios';
 import { BullModule } from '@nestjs/bull';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { join } from 'path';
-import { FetchForNewChapterToken } from './jobs/fetch-for-new-chapter';
-import {
-  FetchForNewEpisodeJob,
-  fetchWorkEpisodeToken,
-} from './jobs/fetch-for-new-episode';
+
 import { OkamiService } from './okami.service';
 
 @Module({
@@ -44,10 +40,13 @@ import { OkamiService } from './okami.service';
 
     BullModule.registerQueue(
       {
-        name: fetchWorkEpisodeToken,
+        name: 'find-serie-episode',
+        processors: [
+          join(__dirname, 'workers', 'process-fetch-for-new-episode.js'),
+        ],
       },
       {
-        name: FetchForNewChapterToken,
+        name: 'find-comic-cap-by-url',
         processors: [
           join(__dirname, 'workers', 'process-fetch-for-new-chapter.js'),
         ],
@@ -55,6 +54,6 @@ import { OkamiService } from './okami.service';
     ),
   ],
   controllers: [],
-  providers: [OkamiService, FetchForNewEpisodeJob],
+  providers: [OkamiService],
 })
 export class AppModule {}
