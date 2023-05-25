@@ -110,6 +110,8 @@ export class ProcessFetchForNewChapter {
 
       done(null, { message: 'Done' });
     } catch (e) {
+      await job.moveToFailed({ message: e.message }, true);
+
       done(e, { message: e.message });
     }
   }

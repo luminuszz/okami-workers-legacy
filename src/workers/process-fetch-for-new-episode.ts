@@ -97,6 +97,7 @@ export class FetchForNewEpisodeJob {
 
       done(null, { message: 'Done' });
     } catch (error) {
+      await job.moveToFailed({ message: error.message });
       done(error, { message: error.message });
     }
   }
