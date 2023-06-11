@@ -44,12 +44,26 @@ import { OkamiService } from './okami.service';
         processors: [
           join(__dirname, 'workers', 'process-fetch-for-new-episode.js'),
         ],
+        limiter: {
+          max: 2,
+          duration: 60000,
+        },
+        settings: {
+          retryProcessDelay: 10000,
+        },
       },
       {
         name: 'find-comic-cap-by-url',
         processors: [
           join(__dirname, 'workers', 'process-fetch-for-new-chapter.js'),
         ],
+        limiter: {
+          max: 2,
+          duration: 60000,
+        },
+        settings: {
+          retryProcessDelay: 10000,
+        },
       },
     ),
   ],
