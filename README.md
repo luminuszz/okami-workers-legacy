@@ -50,7 +50,7 @@ $ docker compose up --build
 ## Other OKAMI modules 
 
 - [OKAMI-WORKERS](https://github.com/luminuszz/okami-workers)
-- [OKAMI-FRONT-END](https://github.com/luminuszz/okami-front-end)
+- [OKAMI-FRONT-END](https://github.com/luminuszz/okami-client)
 - [OKAMI-SERVER](https://github.com/luminuszz/okami)
 
 ## License
