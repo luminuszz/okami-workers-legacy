@@ -40,9 +40,11 @@ import { OkamiService } from './okami.service';
         processors: [
           join(__dirname, 'workers', 'process-fetch-for-new-episode.js'),
         ],
-
+        defaultJobOptions: {
+          removeOnComplete: true,
+        },
         settings: {
-          retryProcessDelay: 10000,
+          retryProcessDelay: 1000,
         },
       },
       {
@@ -50,8 +52,11 @@ import { OkamiService } from './okami.service';
         processors: [
           join(__dirname, 'workers', 'process-fetch-for-new-chapter.js'),
         ],
+        defaultJobOptions: {
+          removeOnComplete: true,
+        },
         settings: {
-          retryProcessDelay: 10000,
+          retryProcessDelay: 1000,
         },
       },
     ),
