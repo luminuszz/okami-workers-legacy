@@ -28,10 +28,6 @@ import { OkamiService } from './okami.service';
           },
           defaultJobOptions: {
             removeOnComplete: true,
-            backoff: {
-              type: 'exponential',
-              delay: 2000,
-            },
           },
         };
       },
@@ -44,10 +40,7 @@ import { OkamiService } from './okami.service';
         processors: [
           join(__dirname, 'workers', 'process-fetch-for-new-episode.js'),
         ],
-        limiter: {
-          max: 3,
-          duration: 30000,
-        },
+
         settings: {
           retryProcessDelay: 10000,
         },
@@ -57,10 +50,6 @@ import { OkamiService } from './okami.service';
         processors: [
           join(__dirname, 'workers', 'process-fetch-for-new-chapter.js'),
         ],
-        limiter: {
-          max: 3,
-          duration: 30000,
-        },
         settings: {
           retryProcessDelay: 10000,
         },
